@@ -10,6 +10,7 @@ namespace ArenaBreak.Core
         private float _current;
 
         public float Current => _current;
+        public float Max => _maxHealth;
         public bool IsDead => _current <= 0f;
 
         public event Action<float> Damaged;

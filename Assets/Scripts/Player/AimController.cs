@@ -36,12 +36,16 @@ namespace ArenaBreak.Player
         private void OnDisable()
         {
             _switcher.WeaponChanged -= OnWeaponChanged;
+            // 사망 등으로 꺼질 때 줌이 걸린 채 남지 않게 원래대로 돌린다
+            OnWeaponChanged(_switcher.Current);
+            _camera.fieldOfView = _defaultFov;
+            _player.SensitivityMultiplier = 1f;
         }
 
         private void Update()
         {
             WeaponSystem weapon = _switcher.Current;
-            bool pressed = Mouse.current.rightButton.isPressed;
+            bool pressed = Mouse.current.rightButton.isPressed && !_switcher.IsHolstered;
             _player.SprintBlocked = pressed;
             SetAiming(pressed && !weapon.IsReloading);
 

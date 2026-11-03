@@ -11,16 +11,19 @@ namespace ArenaBreak.Player
         private float _detonateTime = float.MaxValue;
         private bool _detonated;
 
+        public float FuseTime => _fuseTime;
+
         private void Awake()
         {
             _body = GetComponent<Rigidbody>();
         }
 
-        public void Launch(Vector3 velocity, Vector3 spin)
+        // 손에 쥐고 있던 시간(cookedTime)만큼 신관이 이미 타 있으므로 남은 시간만 기다린다
+        public void Launch(Vector3 velocity, Vector3 spin, float cookedTime = 0f)
         {
             _body.linearVelocity = velocity;
             _body.angularVelocity = spin;
-            _detonateTime = Time.time + _fuseTime;
+            _detonateTime = Time.time + Mathf.Max(0f, _fuseTime - cookedTime);
         }
 
         private void Update()

@@ -34,6 +34,14 @@ namespace ArenaBreak.Player
             _reserve = _data.StartReserve;
         }
 
+        public void Refill()
+        {
+            _ammo = _data.MagazineSize;
+            _reserve = _data.StartReserve;
+            IsReloading = false;
+            AmmoChanged?.Invoke(_ammo, _reserve);
+        }
+
         private void OnDisable()
         {
             // 무기를 바꾸면 장전이 취소된다. 탄은 FinishReload에서만 옮기므로 손실 없음

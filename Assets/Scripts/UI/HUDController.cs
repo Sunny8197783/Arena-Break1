@@ -1,4 +1,5 @@
 using System.Collections;
+using ArenaBreak.Core;
 using ArenaBreak.Player;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,9 +23,23 @@ namespace ArenaBreak.UI
         [SerializeField] private Text[] _throwableLabels;
         [SerializeField] private Color _slotActiveColor = new Color(1f, 0.8f, 0.35f);
         [SerializeField] private Color _slotIdleColor = new Color(1f, 1f, 1f, 0.45f);
+        [SerializeField] private Health _playerHealth;
+        [SerializeField] private PlayerDeath _playerDeath;
+        [SerializeField] private Image _healthFill;
+        [SerializeField] private Text _healthText;
+        [SerializeField] private Image _damageFlash;
+        [SerializeField] private float _damageFlashAlpha = 0.45f;
+        [SerializeField] private float _damageFlashFade = 0.4f;
+        [SerializeField] private GameObject _deathScreen;
+        [SerializeField] private Text _respawnText;
+        [SerializeField] private GameObject _cookPanel;
+        [SerializeField] private Text _cookText;
+        [SerializeField] private float _countdownTick = 0.05f;
 
         private WeaponSystem _weapon;
         private Coroutine _flash;
+        private Coroutine _damageRoutine;
+        private Coroutine _cookRoutine;
 
         private void OnEnable()
         {
@@ -33,6 +48,12 @@ namespace ArenaBreak.UI
             _aim.ScopeChanged += OnScopeChanged;
             _aim.RedDotChanged += OnRedDotChanged;
             _throwables.CountChanged += OnThrowableCountChanged;
+            _throwables.HoldStarted += OnHoldStarted;
+            _throwables.ThrowStarted += OnCookEnded;
+            _throwables.Finished += OnCookEnded;
+            _playerHealth.Damaged += OnPlayerDamaged;
+            _playerHealth.Died += OnPlayerDied;
+            _playerHealth.Revived += OnPlayerRevived;
             Bind(_switcher.Current);
         }
 
@@ -43,6 +64,12 @@ namespace ArenaBreak.UI
             _aim.ScopeChanged -= OnScopeChanged;
             _aim.RedDotChanged -= OnRedDotChanged;
             _throwables.CountChanged -= OnThrowableCountChanged;
+            _throwables.HoldStarted -= OnHoldStarted;
+            _throwables.ThrowStarted -= OnCookEnded;
+            _throwables.Finished -= OnCookEnded;
+            _playerHealth.Damaged -= OnPlayerDamaged;
+            _playerHealth.Died -= OnPlayerDied;
+            _playerHealth.Revived -= OnPlayerRevived;
             Unbind();
         }
 
@@ -64,6 +91,91 @@ namespace ArenaBreak.UI
 
             for (int i = 0; i < _throwables.Slots.Count; i++)
                 OnThrowableCountChanged(i, _throwables.Slots[i].Count);
+
+            UpdateHealth();
+            _deathScreen.SetActive(false);
+            _cookPanel.SetActive(false);
+            SetDamageAlpha(0f);
+        }
+
+        private void UpdateHealth()
+        {
+            _healthFill.fillAmount = _playerHealth.Current / _playerHealth.Max;
+            _healthText.text = Mathf.CeilToInt(_playerHealth.Current).ToString();
+        }
+
+        private void OnPlayerDamaged(float amount)
+        {
+            UpdateHealth();
+            if (_damageRoutine != null) StopCoroutine(_damageRoutine);
+            _damageRoutine = StartCoroutine(DamageFlash());
+        }
+
+        private IEnumerator DamageFlash()
+        {
+            for (float t = 0f; t < 1f; t += Time.deltaTime / _damageFlashFade)
+            {
+                SetDamageAlpha(_damageFlashAlpha * (1f - t));
+                yield return null;
+            }
+            SetDamageAlpha(0f);
+            _damageRoutine = null;
+        }
+
+        private void SetDamageAlpha(float alpha)
+        {
+            Color c = _damageFlash.color;
+            c.a = alpha;
+            _damageFlash.color = c;
+        }
+
+        private void OnPlayerDied()
+        {
+            _deathScreen.SetActive(true);
+            OnCookEnded();
+            StartCoroutine(RespawnCountdown());
+        }
+
+        private IEnumerator RespawnCountdown()
+        {
+            float end = Time.time + _playerDeath.RespawnDelay;
+            while (Time.time < end)
+            {
+                _respawnText.text = $"{end - Time.time:0.0}초 후 부활";
+                yield return new WaitForSeconds(_countdownTick);
+            }
+        }
+
+        private void OnPlayerRevived()
+        {
+            _deathScreen.SetActive(false);
+            UpdateHealth();
+        }
+
+        private void OnHoldStarted(int slot, float fuse)
+        {
+            if (_cookRoutine != null) StopCoroutine(_cookRoutine);
+            _cookRoutine = StartCoroutine(CookCountdown(_throwables.Slots[slot].Label, Time.time + fuse));
+        }
+
+        // 핀을 뽑은 뒤 남은 신관 시간을 보여줘서 원하는 타이밍에 던질 수 있게 한다
+        private IEnumerator CookCountdown(string label, float detonateTime)
+        {
+            _cookPanel.SetActive(true);
+            while (Time.time < detonateTime)
+            {
+                _cookText.text = $"{label}  {detonateTime - Time.time:0.0}s";
+                yield return new WaitForSeconds(_countdownTick);
+            }
+            _cookPanel.SetActive(false);
+            _cookRoutine = null;
+        }
+
+        private void OnCookEnded()
+        {
+            if (_cookRoutine != null) StopCoroutine(_cookRoutine);
+            _cookRoutine = null;
+            _cookPanel.SetActive(false);
         }
 
         private void Bind(WeaponSystem weapon)
