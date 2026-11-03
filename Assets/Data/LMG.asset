@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cc1d863042d92344a77848027960a92, type: 3}
+  m_Name: LMG
+  m_EditorClassIdentifier: Assembly-CSharp::ArenaBreak.Player.WeaponData
+  _displayName: LMG
+  _damage: 22
+  _range: 150
+  _fireInterval: 0.085
+  _automatic: 1
+  _recoilDegrees: 1.1
+  _hipSpread: 3
+  _aimSpread: 0.6
+  _magazineSize: 100
+  _startReserve: 300
+  _reloadTime: 4
+  _aimFov: 50
+  _aimSensitivity: 0.6
+  _scopeOverlay: 0
+  _redDot: 0
+  _pellets: 1

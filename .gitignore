@@ -73,3 +73,6 @@ crashlytics-build.properties
 # 학생 개인 작업 메모
 /scratch/
 /_personal/
+
+# MCP 스크린샷 캡처
+/[Cc]aptures/
